@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Socket, io } from "socket.io-client";
 
@@ -9,14 +8,11 @@ export const Room = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const name = searchParams.get("name");
   const [lobby, setLobby] = useState(true);
-  const [socket, setSocket] = useState<null | Socket>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const socket = io(URL, {
-      autoConnect: false,
-    });
+    const socket = io(URL);
     socket.on("send-offer", ({ roomId }) => {
-      alert("Send offer please");
       setLobby(false);
       socket.emit("offer", {
         sdp: "",
@@ -32,15 +28,19 @@ export const Room = () => {
         roomId,
       });
     });
-    socket.on("answer", ({ roomId, answer }) => {
-      alert("connected to the room");
+
+    socket.on("answer", () => {
+      alert("Connected to the room");
     });
 
     socket.on("lobby", () => {
       setLobby(true);
     });
 
-    setSocket(socket);
+    // Cleanup function to disconnect the socket when the component unmounts
+    return () => {
+      socket.disconnect();
+    };
   }, [name]);
 
   if (lobby) {
